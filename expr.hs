@@ -1,4 +1,16 @@
 import Data.Char
+import System.IO
+import System.Environment
+
+main = do
+    args <- getArgs
+    if length args > 0 then do
+        contents <- readFile $ head args
+        writeFile ("derive_" ++ head args) $ unlines $ map (show.derive.parse) $ lines contents
+    else
+        myInteract $ show . derive . parse
+
+myInteract fun = interact $ unlines . map fun . lines
 
 data Expr = Const Int
     | Var Char
@@ -100,7 +112,6 @@ replace s find repl =
         then repl ++ (replace (drop (length find) s) find repl)
         else [head s] ++ (replace (tail s) find repl)
 
--- + 1 2
 parse text = getPureExpr . parseLex . getEither . words . replace (replace text "(" " ( ") ")" $ " ) "
 
 parseLex lexems
