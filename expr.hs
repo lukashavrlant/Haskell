@@ -128,9 +128,9 @@ getExpr lexems
     | op == Left "-" = Right $ Sub (str2Expr left) (str2Expr right)
     | op == Left "*" = Right $ Multi (str2Expr left) (str2Expr right)
     | op == Left "/" = Right $ Div (str2Expr left) (str2Expr right)
-    where   left = head lexems
-            op = head . tail $ lexems
-            right = head . tail . tail $ lexems
+    where   left = lexems !! 0
+            op = lexems !! 1
+            right = lexems !! 2
 
 takeFromTo 0 to xs = take to xs
 takeFromTo from to (x:xs) = takeFromTo (from-1) (to-1) xs
