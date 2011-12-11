@@ -111,29 +111,26 @@ derive (Div a b) = simplify $ (Div (Sub (Multi (simderive a) b) (Multi a (simder
 parse = getPureExpr . parseLex . getEither . words . removeSpaces . replace "+-*/()"
 
 parseLex lexems
-    | snd pair == 0 = head lexems
+    | b == 0 = head lexems
     | otherwise = parseLex (makeExpr lexems pair)
-    where pair = findPair lexems
+    where pair@(a,b) = findPair lexems
 
 makeExpr lexems (a, b) = (takeFromTo 0 a lexems) ++ [newExpr] ++ (takeFromTo (b+1) (length lexems) lexems)
     where newExpr = (getExpr (takeFromTo (a+1) b lexems))
 
-getExpr lexems
+getExpr [left, op, right]
     | op == Left "+" = Right $ Add (str2Expr left) (str2Expr right)
     | op == Left "-" = Right $ Sub (str2Expr left) (str2Expr right)
     | op == Left "*" = Right $ Multi (str2Expr left) (str2Expr right)
     | op == Left "/" = Right $ Div (str2Expr left) (str2Expr right)
-    where   left = lexems !! 0
-            op = lexems !! 1
-            right = lexems !! 2
-
+    
 takeFromTo 0 to xs = take to xs
 takeFromTo from to (x:xs) = takeFromTo (from-1) (to-1) xs
 
 str2Expr (Right x) = x
-str2Expr (Left x) 
-    | isLetter $ head x = Var $ head x
-    | otherwise = Const (read x :: Int)
+str2Expr (Left expr@(x:xs)) 
+    | isLetter x = Var x
+    | otherwise = Const (read expr :: Int)
 
 getPureExpr (Right a) = a
 
