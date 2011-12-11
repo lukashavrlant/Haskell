@@ -124,10 +124,10 @@ makeExpr lexems (a, b) = (takeFromTo 0 a lexems) ++ [newExpr] ++ (takeFromTo (b+
     where newExpr = (getExpr (takeFromTo (a+1) b lexems))
 
 getExpr lexems
-    | op == StrExpr "+" = TypeExpr $ Add (str2Expr left) (str2Expr right)
-    | op == StrExpr "-" = TypeExpr $ Sub (str2Expr left) (str2Expr right)
-    | op == StrExpr "*" = TypeExpr $ Multi (str2Expr left) (str2Expr right)
-    | op == StrExpr "/" = TypeExpr $ Div (str2Expr left) (str2Expr right)
+    | op == Left "+" = Right $ Add (str2Expr left) (str2Expr right)
+    | op == Left "-" = Right $ Sub (str2Expr left) (str2Expr right)
+    | op == Left "*" = Right $ Multi (str2Expr left) (str2Expr right)
+    | op == Left "/" = Right $ Div (str2Expr left) (str2Expr right)
     where   left = head lexems
             op = head . tail $ lexems
             right = head . tail . tail $ lexems
@@ -135,21 +135,18 @@ getExpr lexems
 takeFromTo 0 to xs = take to xs
 takeFromTo from to (x:xs) = takeFromTo (from-1) (to-1) xs
 
-str2Expr (TypeExpr x) = x
-str2Expr (StrExpr x) 
+str2Expr (Right x) = x
+str2Expr (Left x) 
     | isLetter $ head x = Var $ head x
     | otherwise = Const (read x :: Int)
 
-getPureExpr (TypeExpr a) = a
-    
-data EitherStr = StrExpr String | TypeExpr Expr
-    deriving(Show, Eq)
+getPureExpr (Right a) = a
 
-getEither lexems = [StrExpr x | x <- lexems]
+getEither lexems = [Left x | x <- lexems]
 
 findPair lexems = findRight lexems (0,0) 0
 findRight [] x  _ = x
 findRight (x:xs) (a, b) i
-    | x == StrExpr "(" = findRight xs (i, b) (i+1)
-    | x == StrExpr ")" = (a, i)
+    | x == Left "(" = findRight xs (i, b) (i+1)
+    | x == Left ")" = (a, i)
     | otherwise = findRight xs (a, b) (i+1)
