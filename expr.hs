@@ -3,6 +3,7 @@ import System.IO
 import System.Environment
 import Data.List
 
+---------- Input/Output ----------
 main = do
     args <- getArgs
     if length args > 0 then do
@@ -13,6 +14,8 @@ main = do
 
 myInteract fun = interact $ unlines . map fun . lines
 
+
+---------- Data definiton ----------
 data Expr = Const Int
     | Var Char
     | Add Expr Expr
@@ -31,6 +34,8 @@ instance Show Expr where
     
 showBinary op a b = "(" ++ (show a) ++ " " ++ op ++ " " ++ (show b) ++ ")"
 
+
+---------- Help functions ----------
 zero (Const 0) = True
 zero _ = False
 
@@ -55,6 +60,8 @@ normalize (Const a) (Const b)
             n = (Const $ a `div` g)
             d = (Const $ b `div` g)
 
+
+---------- Simplify expression ----------
 simplifyHelper (a,b) = (simplify a, simplify b)
 
 simplify expr@(Add a b)
@@ -88,7 +95,8 @@ simplify expr@(Div a b)
     where (sa, sb) = simplifyHelper(a, b)
     
 simplify expr = expr
-    
+
+---------- Derive expression ----------
 simderive = derive . simplify    
 
 derive (Const _) = Const 0
@@ -99,20 +107,7 @@ derive (Multi a b) = simplify $ (Add (Multi (simderive a) b) (Multi a (simderive
 derive (Div a b) = simplify $ (Div (Sub (Multi (simderive a) b) (Multi a (simderive b))) (sqr2 b))
 
 
-subs _ _ expr@(Const _) = expr
-subs (Var y) value expr@(Var x)
-    | y == x = value
-    | otherwise = expr
-    
-subs var value (Add a b) = subsHelper var value Add a b 
-subs var value (Sub a b) = subsHelper var value Sub a b
-subs var value (Multi a b) = subsHelper var value Multi a b
-subs var value (Div a b) = subsHelper var value Div a b
-
-subsHelper var value typ a b = typ (subs var value a) (subs var value b)
-
-compute var value expr = simplify . subs var value $ expr
-
+---------- Parsing ----------
 parse = getPureExpr . parseLex . getEither . words . removeSpaces . replace "+-*/()"
 
 parseLex lexems
