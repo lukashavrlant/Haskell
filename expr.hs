@@ -1,3 +1,5 @@
+import Data.Char
+
 data Expr = Const Int
     | Var Char
     | Add Expr Expr
@@ -76,8 +78,8 @@ derive (Div a b) = simplify $ (Div (Sub (Multi (simderive a) b) (Multi a (simder
 
 
 subs _ _ expr@(Const _) = expr
-subs var value expr@(Var x)
-    | var == x = value
+subs (Var y) value expr@(Var x)
+    | y == x = value
     | otherwise = expr
     
 subs var value (Add a b) = subsHelper var value Add a b 
@@ -100,6 +102,7 @@ replace s find repl =
 
 -- + 1 2
 parse text = getPureExpr . parseLex . getEither . words . replace (replace text "(" " ( ") ")" $ " ) "
+
 parseLex lexems
     | snd pair == 0 = head lexems
     | otherwise = parseLex (makeExpr lexems pair)
@@ -114,15 +117,16 @@ getExpr lexems
     | op == StrExpr "*" = TypeExpr $ Multi (str2Expr left) (str2Expr right)
     | op == StrExpr "/" = TypeExpr $ Div (str2Expr left) (str2Expr right)
     where   left = head lexems
-            op = head $ tail lexems
-            right = head $ tail $ tail lexems
+            op = head . tail $ lexems
+            right = head . tail . tail $ lexems
 
 takeFromTo 0 to xs = take to xs
 takeFromTo from to (x:xs) = takeFromTo (from-1) (to-1) xs
 
-str2Expr (StrExpr "x") = Var 'x'
-str2Expr (StrExpr a) = Const (read a :: Int)
 str2Expr (TypeExpr x) = x
+str2Expr (StrExpr x) 
+    | isLetter $ head x = Var $ head x
+    | otherwise = Const (read x :: Int)
 
 getPureExpr (TypeExpr a) = a
     
@@ -137,17 +141,3 @@ findRight (x:xs) (a, b) i
     | x == StrExpr "(" = findRight xs (i, b) (i+1)
     | x == StrExpr ")" = (a, i)
     | otherwise = findRight xs (a, b) (i+1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
