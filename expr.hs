@@ -54,6 +54,7 @@ simplify expr@(Var _) = expr
 simplify expr@(Add a b)
     | zero sa = sb
     | zero sb = sa
+    | sa == sb = (Multi (Const 2) sa)
     | bothConst sa sb = doop (+) sa sb
     | otherwise = Add sa sb
     where (sa, sb) = simplifyHelper(a, b)
