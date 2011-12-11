@@ -90,6 +90,53 @@ subsHelper var value typ a b = typ (subs var value a) (subs var value b)
 compute var value expr = simplify . subs var value $ expr
 
 
+-- http://bluebones.net/2007/01/replace-in-haskell/
+replace :: Eq a => [a] -> [a] -> [a] -> [a]
+replace [] _ _ = []
+replace s find repl =
+    if take (length find) s == find
+        then repl ++ (replace (drop (length find) s) find repl)
+        else [head s] ++ (replace (tail s) find repl)
+
+-- + 1 2
+parse text = getPureExpr . parseLex . getEither . words . replace (replace text "(" " ( ") ")" $ " ) "
+parseLex lexems
+    | snd pair == 0 = head lexems
+    | otherwise = parseLex (makeExpr lexems pair)
+    where pair = findPair lexems
+
+makeExpr lexems (a, b) = (takeFromTo 0 a lexems) ++ [newExpr] ++ (takeFromTo (b+1) (length lexems) lexems)
+    where newExpr = (getExpr (takeFromTo (a+1) b lexems))
+
+getExpr lexems
+    | op == StrExpr "+" = TypeExpr $ Add (str2Expr left) (str2Expr right)
+    | op == StrExpr "-" = TypeExpr $ Sub (str2Expr left) (str2Expr right)
+    | op == StrExpr "*" = TypeExpr $ Multi (str2Expr left) (str2Expr right)
+    | op == StrExpr "/" = TypeExpr $ Div (str2Expr left) (str2Expr right)
+    where   left = head lexems
+            op = head $ tail lexems
+            right = head $ tail $ tail lexems
+
+takeFromTo 0 to xs = take to xs
+takeFromTo from to (x:xs) = takeFromTo (from-1) (to-1) xs
+
+str2Expr (StrExpr "x") = Var 'x'
+str2Expr (StrExpr a) = Const (read a :: Int)
+str2Expr (TypeExpr x) = x
+
+getPureExpr (TypeExpr a) = a
+    
+data EitherStr = StrExpr String | TypeExpr Expr
+    deriving(Show, Eq)
+
+getEither lexems = [StrExpr x | x <- lexems]
+
+findPair lexems = findRight lexems (0,0) 0
+findRight [] x  _ = x
+findRight (x:xs) (a, b) i
+    | x == StrExpr "(" = findRight xs (i, b) (i+1)
+    | x == StrExpr ")" = (a, i)
+    | otherwise = findRight xs (a, b) (i+1)
 
 
 
