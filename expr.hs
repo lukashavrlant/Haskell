@@ -1,6 +1,7 @@
 import Data.Char
 import System.IO
 import System.Environment
+import Data.List
 
 main = do
     args <- getArgs
@@ -104,16 +105,7 @@ subsHelper var value typ a b = typ (subs var value a) (subs var value b)
 
 compute var value expr = simplify . subs var value $ expr
 
-
--- http://bluebones.net/2007/01/replace-in-haskell/
-replace :: Eq a => [a] -> [a] -> [a] -> [a]
-replace [] _ _ = []
-replace s find repl =
-    if take (length find) s == find
-        then repl ++ (replace (drop (length find) s) find repl)
-        else [head s] ++ (replace (tail s) find repl)
-
-parse text = getPureExpr . parseLex . getEither . words . replace (replace text "(" " ( ") ")" $ " ) "
+parse = getPureExpr . parseLex . getEither . words . removeWS . replace "+-*/()"
 
 parseLex lexems
     | snd pair == 0 = head lexems
@@ -150,3 +142,12 @@ findRight (x:xs) (a, b) i
     | x == Left "(" = findRight xs (i, b) (i+1)
     | x == Left ")" = (a, i)
     | otherwise = findRight xs (a, b) (i+1)
+    
+replace _ [] = []
+replace chars (x:xs)
+    | (find (==x) chars) == Nothing = x : (replace chars xs)
+    | otherwise = ' ' : x : ' ' : (replace chars xs)
+    
+removeWS [] = []
+removeWS (' ':' ':xs) = removeWS $ ' ':xs
+removeWS (x:xs) = x : removeWS xs
