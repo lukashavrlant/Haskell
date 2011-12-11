@@ -47,10 +47,15 @@ doop op (Const a) (Const b) = Const (op a b)
 inverse (Const a) = Const (-a)
 inverse a = (Sub (Const 0) a)
 
-simplifyHelper (a,b) = (simplify a, simplify b)
+normalize (Const a) (Const b)
+    | b == 0 = error "Division by Zero"
+    | d == (Const 1) = n
+    | otherwise = (Div n d)
+    where   g = gcd a b
+            n = (Const $ a `div` g)
+            d = (Const $ b `div` g)
 
-simplify expr@(Const _) = expr
-simplify expr@(Var _) = expr
+simplifyHelper (a,b) = (simplify a, simplify b)
 
 simplify expr@(Add a b)
     | zero sa = sb
@@ -78,8 +83,11 @@ simplify expr@(Multi a b)
 simplify expr@(Div a b)
     | one sb = sa
     | zero sa = (Const 0)
+    | bothConst sa sb = normalize sa sb
     | otherwise = Div sa sb
     where (sa, sb) = simplifyHelper(a, b)
+    
+simplify expr = expr
     
 simderive = derive . simplify    
 
@@ -105,7 +113,7 @@ subsHelper var value typ a b = typ (subs var value a) (subs var value b)
 
 compute var value expr = simplify . subs var value $ expr
 
-parse = getPureExpr . parseLex . getEither . words . removeWS . replace "+-*/()"
+parse = getPureExpr . parseLex . getEither . words . removeSpaces . replace "+-*/()"
 
 parseLex lexems
     | snd pair == 0 = head lexems
@@ -148,6 +156,6 @@ replace chars (x:xs)
     | (find (==x) chars) == Nothing = x : (replace chars xs)
     | otherwise = ' ' : x : ' ' : (replace chars xs)
     
-removeWS [] = []
-removeWS (' ':' ':xs) = removeWS $ ' ':xs
-removeWS (x:xs) = x : removeWS xs
+removeSpaces [] = []
+removeSpaces (' ':' ':xs) = removeSpaces $ ' ':xs
+removeSpaces (x:xs) = x : removeSpaces xs
