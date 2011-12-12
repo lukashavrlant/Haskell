@@ -123,6 +123,8 @@ derive (Div a b) = simplify $ (Div (Sub (Multi (simderive a) b) (Multi a (simder
 ---------- Parsing ----------
 parse = getPureExpr . parseLex . getEither . words . removeSpaces . replace "+-*/()"
 
+
+parseLex [expr] = Right $ (str2Expr expr)
 parseLex lexems
     | b == 0 = head lexems
     | otherwise = parseLex (makeExpr lexems pair)
@@ -130,7 +132,7 @@ parseLex lexems
 
 makeExpr lexems (a, b) = (takeFromTo 0 a lexems) ++ [newExpr] ++ (takeFromTo (b+1) (length lexems) lexems)
     where newExpr = (getExpr (takeFromTo (a+1) b lexems))
-
+  
 getExpr [left, op, right]
     | op == Left "+" = Right $ Add (str2Expr left) (str2Expr right)
     | op == Left "-" = Right $ Sub (str2Expr left) (str2Expr right)
