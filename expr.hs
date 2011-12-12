@@ -10,29 +10,38 @@ main = do
         contents <- readFile $ head args
         writeFile ("derive_" ++ head args) $ unlines $ map (show.derive.parse) $ lines contents
     else
-        myInteract $ show . derive . parse
-
-myInteract fun = interact $ unlines . map fun . lines
+        interact $ unlines . map (show . derive . parse) . lines 
 
 
 ---------- Data definiton ----------
-data Expr = Const Int
+data Expr a = Const a
     | Var Char
-    | Add Expr Expr
-    | Sub Expr Expr
-    | Multi Expr Expr
-    | Div Expr Expr
+    | Add (Expr a) (Expr a)
+    | Sub (Expr a) (Expr a)
+    | Multi (Expr a) (Expr a)
+    | Div (Expr a) (Expr a)
     deriving(Eq)
     
-instance Show Expr where
-    show (Const a) = show a
+instance (Show e) => Show (Expr e) where
+    show (Const x) = show x
     show (Var x) = show x
     show (Add a b) = showBinary "+" a b
     show (Sub a b) = showBinary "-" a b
-    show (Multi a b) = showBinary "*" a b
     show (Div a b) = showBinary "/" a b
+    show (Multi a b) = showBinary "*" a b
+    
     
 showBinary op a b = "(" ++ (show a) ++ " " ++ op ++ " " ++ (show b) ++ ")"
+
+
+---------- Functors ----------
+instance Functor Expr where  
+    fmap f (Const a) = Const (f a)
+    fmap f (Var a) = Var a
+    fmap f (Add a b) = Add (fmap f a) (fmap f b)
+    fmap f (Sub a b) = Sub (fmap f a) (fmap f b)
+    fmap f (Multi a b) = Multi (fmap f a) (fmap f b)
+    fmap f (Div a b) = Div (fmap f a) (fmap f b)
 
 
 ---------- Help functions ----------
