@@ -77,7 +77,7 @@ normalize (Const a) (Const b)
 ---------- Simplify expression ----------
 simplifyHelper (a,b) = (simplify a, simplify b)
 
-simplify expr@(Add a b)
+simplify (Add a b)
     | zero sa = sb
     | zero sb = sa
     | sa == sb = (Multi (Const 2) sa)
@@ -85,14 +85,14 @@ simplify expr@(Add a b)
     | otherwise = Add sa sb
     where (sa, sb) = simplifyHelper(a, b)
           
-simplify expr@(Sub a b)
+simplify (Sub a b)
     | zero sa = inverse sb
     | zero sb = sa
     | bothConst sa sb = doop (-) sa sb
     | otherwise = Sub sa sb
     where (sa, sb) = simplifyHelper(a, b)
     
-simplify expr@(Multi a b)
+simplify (Multi a b)
     | (zero sa) || (zero sb) = (Const 0)
     | one sa = sb
     | one sb = sa
@@ -100,7 +100,7 @@ simplify expr@(Multi a b)
     | otherwise = Multi sa sb
     where (sa, sb) = simplifyHelper(a, b)
     
-simplify expr@(Div a b)
+simplify (Div a b)
     | one sb = sa
     | zero sa = (Const 0)
     | bothConst sa sb = normalize sa sb
@@ -125,10 +125,8 @@ parse = getPureExpr . parseLex . (map Left) . words . removeSpaces . replace "+-
 
 
 parseLex [expr] = Right $ str2Expr expr
-parseLex lexems
-    | b == 0 = head lexems
-    | otherwise = parseLex (makeExpr lexems pair)
-    where pair@(a,b) = findPair lexems
+parseLex lexems = parseLex (makeExpr lexems pair)
+    where pair@(_,b) = findPair lexems
 
 makeExpr lexems (a, b) = (takeFromTo 0 a lexems) ++ [newExpr] ++ (takeFromTo (b+1) (length lexems) lexems)
     where newExpr = (getExpr (takeFromTo (a+1) b lexems))
