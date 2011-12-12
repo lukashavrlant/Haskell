@@ -2,16 +2,20 @@ import Data.Char
 import System.IO
 import System.Environment
 import Data.List
+import System.IO.Error
 
 ---------- Input/Output ----------
-main = do
+main = tryMain `catch` handler
+
+tryMain = do
     args <- getArgs
     if length args > 0 then do
         contents <- readFile $ head args
         writeFile ("derive_" ++ head args) $ unlines $ map (show.derive.parse) $ lines contents
     else
         interact $ unlines . map (show . derive . parse) . lines 
-
+        
+handler e = putStrLn "File does not exits" 
 
 ---------- Data definiton ----------
 data Expr a = Const a
