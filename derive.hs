@@ -121,7 +121,7 @@ derive (Div a b) = simplify $ (Div (Sub (Multi (simderive a) b) (Multi a (simder
 
 
 ---------- Parsing ----------
-parse = getPureExpr . parseLex . getEither . words . removeSpaces . replace "+-*/()"
+parse = getPureExpr . parseLex . (map Left) . words . removeSpaces . replace "+-*/()"
 
 
 parseLex [expr] = Right $ str2Expr expr
