@@ -149,8 +149,6 @@ str2Expr (Left expr@(x:xs))
 
 getPureExpr (Right a) = a
 
-getEither lexems = [Left x | x <- lexems]
-
 findPair lexems = findRight lexems (0,0) 0
 findRight [] x  _ = x
 findRight (x:xs) (a, b) i
